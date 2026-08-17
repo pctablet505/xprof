@@ -8256,6 +8256,7 @@ TEST_F(MockTimelineImGuiFixture, FindFirstVisibleAncestorIndex_SelfCollapse) {
       .start_level = 0,
       .nesting_level = 0,
       .expanded = false,
+      .child_indices = {1},
   });
 
   // Group 1: Child (nesting_level = 1)
@@ -8265,6 +8266,7 @@ TEST_F(MockTimelineImGuiFixture, FindFirstVisibleAncestorIndex_SelfCollapse) {
       .start_level = 1,
       .nesting_level = 1,
       .expanded = true,
+      .parent_index = 0,
   });
 
   timeline_.SetTimelineData(std::move(data));
@@ -8294,6 +8296,7 @@ TEST_F(MockTimelineImGuiFixture, FindFirstVisibleAncestorIndex_ParentCollapse) {
       .start_level = 0,
       .nesting_level = 0,
       .expanded = true,
+      .child_indices = {1},
   });
 
   // Group 1: Parent (Collapsed, nesting_level = 1)
@@ -8303,6 +8306,8 @@ TEST_F(MockTimelineImGuiFixture, FindFirstVisibleAncestorIndex_ParentCollapse) {
       .start_level = 1,
       .nesting_level = 1,
       .expanded = false,
+      .parent_index = 0,
+      .child_indices = {2},
   });
 
   // Group 2: Child (nesting_level = 2)
@@ -8312,6 +8317,7 @@ TEST_F(MockTimelineImGuiFixture, FindFirstVisibleAncestorIndex_ParentCollapse) {
       .start_level = 2,
       .nesting_level = 2,
       .expanded = true,
+      .parent_index = 1,
   });
 
   timeline_.SetTimelineData(std::move(data));
@@ -8337,6 +8343,7 @@ TEST_F(MockTimelineImGuiFixture,
       .start_level = 0,
       .nesting_level = 0,
       .expanded = true,
+      .child_indices = {1, 3},
   });
 
   // Group 1: Child A (Collapsed, nesting_level = 1)
@@ -8346,6 +8353,8 @@ TEST_F(MockTimelineImGuiFixture,
       .start_level = 1,
       .nesting_level = 1,
       .expanded = false,
+      .parent_index = 0,
+      .child_indices = {2},
   });
 
   // Group 2: Grandchild A (nesting_level = 2)
@@ -8355,6 +8364,7 @@ TEST_F(MockTimelineImGuiFixture,
       .start_level = 2,
       .nesting_level = 2,
       .expanded = true,
+      .parent_index = 1,
   });
 
   // Group 3: Child B (Expanded, nesting_level = 1, sibling of Child A)
@@ -8364,6 +8374,7 @@ TEST_F(MockTimelineImGuiFixture,
       .start_level = 3,
       .nesting_level = 1,
       .expanded = true,
+      .parent_index = 0,
   });
 
   timeline_.SetTimelineData(std::move(data));

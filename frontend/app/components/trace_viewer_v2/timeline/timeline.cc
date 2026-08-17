@@ -204,11 +204,12 @@ bool DrawExpandCollapseButton(
 // number of levels.
 int GetNextGroupStartLevel(const FlameChartTimelineData& data,
                            int group_index) {
-  if (group_index + 1 < data.groups.size()) {
-    const auto& next_group = data.groups[group_index + 1];
-    if (next_group.nesting_level >= kProcessNestingLevel) {
-      return next_group.start_level;
+  if (group_index >= 0 && group_index < data.groups.size()) {
+    const auto& group = data.groups[group_index];
+    if (group.has_children && group.nesting_level == kProcessNestingLevel) {
+      return group.start_level;
     }
+    return group.start_level + group.level_count;
   }
   return static_cast<int>(data.events_by_level.size());
 }
@@ -282,6 +283,8 @@ void Timeline::BuildFlattenedGroups(const FlameChartTimelineData& data) {
   hidden_processes_count_ = 0;
   pinned_processes_count_ = 0;
 
+  if (data.groups.empty()) return;
+
   if (!track_management_enabled_) {
     flattened_groups_.reserve(group_count);
     for (int i = 0; i < group_count; ++i) {
@@ -292,8 +295,6 @@ void Timeline::BuildFlattenedGroups(const FlameChartTimelineData& data) {
     }
     return;
   }
-
-  // Pre-categorize groups into hidden, pinned, and all sections.
   // Since a process and all its nested subtracks form a visual block, we
   // propagate the process's status (hidden/pinned) down to its descendant
   // tracks. Retaining this state across iterations avoids performing
@@ -454,9 +455,7 @@ void Timeline::UpdateLevelPositions(const FlameChartTimelineData& data) {
     new_group_offsets[group_index] = current_offset;
     has_visible_group = true;
 
-    const bool has_children =
-        group_index + 1 < data.groups.size() &&
-        data.groups[group_index + 1].nesting_level > group.nesting_level;
+    const bool has_children = group.has_children;
     const bool has_multiple_levels =
         next_group_start_level - group.start_level > 1;
 
@@ -526,6 +525,18 @@ void Timeline::SetVisibleRange(const TimeRange& range, bool animate) {
 }
 
 void Timeline::SetTimelineData(FlameChartTimelineData data) {
+  // Backfill level_counts for child tracks.
+  for (size_t i = 0; i < data.groups.size(); ++i) {
+    data.groups[i].has_children = !data.groups[i].child_indices.empty();
+    if (data.groups[i].level_count <= 0) {
+      int next_level = (i + 1 < data.groups.size())
+                           ? data.groups[i + 1].start_level
+                           : static_cast<int>(data.events_by_level.size());
+      data.groups[i].level_count =
+          std::max(1, next_level - data.groups[i].start_level);
+    }
+  }
+
   // Pre-calculate the level positions to avoid partial state and per-frame
   // layout recalculations before saving the newly arrived timeline_data.
   UpdateLevelPositions(data);
@@ -1020,10 +1031,7 @@ bool Timeline::DrawTrackRow(int group_index, const ImVec2& tracks_start_pos,
              tracks_start_screen_pos.y + group_offsets_[group_index + 1]),
       true);
 
-  const bool has_children =
-      group_index + 1 < timeline_data_.groups.size() &&
-      timeline_data_.groups[group_index + 1].nesting_level >
-          group.nesting_level;
+  const bool has_children = group.has_children;
   const int next_group_start_level =
       GetNextGroupStartLevel(timeline_data_, group_index);
   const bool has_multiple_levels =
