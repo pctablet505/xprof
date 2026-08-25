@@ -28,3 +28,16 @@ MODULE.bazel.lock
 /lib/
 /share/
 
+
+# XProf UI test suite / local frontend build
+frontend/dist/
+tests/ui/goldens/diffs/
+.venv-uitest/
+# Cache artifacts the server writes into whatever --logdir it is pointed at
+demo/plugins/profile/*/.cached_tools.json
+demo/plugins/profile/*/cache_version.txt
+demo/plugins/profile/*/ALL_HOSTS.op_stats_v2.pb
+demo/plugins/profile/*/*.hlo_proto.pb
+demo/plugins/profile/*/*.SSTABLE
+node_modules/
+frontend/.angular/

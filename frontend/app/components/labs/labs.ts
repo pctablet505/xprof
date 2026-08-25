@@ -15,10 +15,33 @@ import {
   setCurrentToolStateAction,
   setLoadingStateAction,
 } from 'org_xprof/frontend/app/store/actions';
-import {trySanitizeUrl} from 'safevalues';
+// OSS note: upstream imports `trySanitizeUrl` from 'safevalues', which the
+// version this repo declares (^1.2.0) does not export -- it breaks `ng build`
+// with TS2305. That release keeps its URL sanitizers in
+// builders/url_builders, which is not listed in the package's `exports` map
+// (only ".", "./restricted/*" and "./dom" are), so there is no import path
+// that reaches them. The original contract is reproduced locally below:
+// return undefined for a javascript: scheme, the original URL otherwise.
 import {windowOpen} from 'safevalues/dom';
 import {CuratedTool} from './curated_tool';
 import {CuratedToolsService} from './curated_tools.service';
+
+/**
+ * Returns `url` unless it uses a `javascript:` scheme, in which case undefined.
+ *
+ * Mirrors the contract of safevalues' `trySanitizeUrl`. Leading control
+ * characters and whitespace are stripped before the scheme is inspected,
+ * because browsers ignore them when resolving a URL and an attacker can
+ * otherwise smuggle `java\tscript:` past a naive prefix check.
+ */
+function trySanitizeUrl(url: string): string|undefined {
+  // eslint-disable-next-line no-control-regex
+  const normalized = url.replace(/[\u0000-\u0020]/g, '').toLowerCase();
+  if (normalized.startsWith('javascript:')) {
+    return undefined;
+  }
+  return url;
+}
 
 function matchesSearch(tool: CuratedTool, query: string): boolean {
   if (!query) return true;

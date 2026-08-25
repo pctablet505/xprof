@@ -1,35 +1,43 @@
 /**
  * @fileoverview Angular service wrapper for the 3P package highlightjs.
- * @see google3/third_party/javascript/highlightjs/README.md
+ *
+ * OSS note: upstream this file imports `google3/third_party/javascript/
+ * highlightjs/...` and relies on `hljs_<lang>` globals that only exist inside
+ * Google's monorepo, so `ng build` fails in the public tree with six TS2304
+ * errors. This is the only `google3/` import in the entire frontend, and it
+ * alone blocks building the OSS frontend from source. Here it is expressed
+ * against the public `highlight.js` package instead, which is the same library
+ * the internal target wraps.
  */
 
-import 'google3/third_party/javascript/highlightjs/highlightjs_bash_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_c_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_cpp_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_css_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_go_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_html_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_java_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_kotlin_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_python_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_sql_raw';
-import 'google3/third_party/javascript/highlightjs/highlightjs_typescript_raw';
-
 import {Injectable} from '@angular/core';
-import * as hljs from 'google3/third_party/javascript/highlightjs/highlightjs_raw_raw';
+import hljs from 'highlight.js/lib/core';
+import bash from 'highlight.js/lib/languages/bash';
+import c from 'highlight.js/lib/languages/c';
+import cpp from 'highlight.js/lib/languages/cpp';
+import css from 'highlight.js/lib/languages/css';
+import go from 'highlight.js/lib/languages/go';
+import java from 'highlight.js/lib/languages/java';
+import javascript from 'highlight.js/lib/languages/javascript';
+import kotlin from 'highlight.js/lib/languages/kotlin';
+import python from 'highlight.js/lib/languages/python';
+import sql from 'highlight.js/lib/languages/sql';
+import typescript from 'highlight.js/lib/languages/typescript';
+import xml from 'highlight.js/lib/languages/xml';
 
-hljs.registerLanguage('python', hljs_python);
-hljs.registerLanguage('java', hljs_java);
-hljs.registerLanguage('go', hljs_go);
-hljs.registerLanguage('typescript', hljs_typescript);
-hljs.registerLanguage('javascript', hljs_javascript);
-hljs.registerLanguage('c', hljs_c);
-hljs.registerLanguage('cpp', hljs_cpp);
-hljs.registerLanguage('kotlin', hljs_kotlin);
-hljs.registerLanguage('css', hljs_css);
-hljs.registerLanguage('bash', hljs_bash);
-hljs.registerLanguage('html', hljs_html);
-hljs.registerLanguage('sql', hljs_sql);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('go', go);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('c', c);
+hljs.registerLanguage('cpp', cpp);
+hljs.registerLanguage('kotlin', kotlin);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('bash', bash);
+// highlight.js registers HTML under the `xml` grammar.
+hljs.registerLanguage('html', xml);
+hljs.registerLanguage('sql', sql);
 
 /** A service for syntax highlighting. */
 @Injectable({providedIn: 'root'})
@@ -42,7 +50,7 @@ export class SyntaxHighlightService {
     if (!language) {
       return hljs.highlightAuto(code);
     }
-    return hljs.highlight(language, code);
+    return hljs.highlight(code, {language});
   }
 }
 
